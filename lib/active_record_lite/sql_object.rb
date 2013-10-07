@@ -4,6 +4,8 @@ require_relative './mass_object'
 require_relative './searchable'
 
 class SQLObject < MassObject
+  extend Searchable
+
   def self.set_table_name(table_name)
     @table_name = table_name
   end
@@ -19,9 +21,9 @@ class SQLObject < MassObject
 
   def self.find(id)
     result = DBConnection.execute(<<-SQL, id)
-    SELECT *
-    FROM #{table_name}
-    WHERE id = ?
+      SELECT *
+      FROM #{table_name}
+      WHERE id = ?
     SQL
 
     return nil if result.empty?
@@ -29,32 +31,25 @@ class SQLObject < MassObject
   end
 
   def create
-    attr_values = []
-    self.class.attributes.each do |attribute|
-      attr_values << self.send(attribute)
-    end
+    attr_values = attribute_values
 
     attribute_line = self.class.attributes.join(',')
     insert_line = (['?'] * self.class.attributes.length).join(',')
 
     DBConnection.execute(<<-SQL, *attr_values)
-    INSERT INTO #{self.class.table_name}(#{attribute_line})
-    VALUES (#{insert_line})
+      INSERT INTO #{self.class.table_name}(#{attribute_line})
+      VALUES (#{insert_line})
     SQL
 
     self.id = DBConnection.last_insert_row_id
   end
 
   def update
-    attr_values = []
-    self.class.attributes.each do |attribute|
-      attr_values << self.send(attribute)
-    end
+    attr_values = attribute_values
 
     set_line = self.class.attributes.map do |attribute|
       "#{attribute} = ?"
-    end
-    set_line = set_line.join(',')
+    end.join(',')
 
     DBConnection.execute(<<-SQL, *attr_values)
     UPDATE #{self.class.table_name}
@@ -73,5 +68,10 @@ class SQLObject < MassObject
   end
 
   def attribute_values
+    attr_values = []
+    self.class.attributes.each do |attribute|
+      attr_values << self.send(attribute)
+    end
+    attr_values
   end
 end

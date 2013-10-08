@@ -1,6 +1,10 @@
 class MassObject
   def self.my_attr_accessible(*attributes)
-    @attributes = [  ]
+    @attributes = []
+    # write your own attr_accessor
+
+    # @attributes = attributes
+    # attr_accessor *attributes
 
     attributes.each do |attribute|
       attr_accessor attribute
@@ -13,6 +17,7 @@ class MassObject
   end
 
   def self.parse_all(results)
+    results.map { |result| self.new(result) }
   end
 
   def initialize(params = {})

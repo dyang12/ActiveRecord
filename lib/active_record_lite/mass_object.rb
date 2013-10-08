@@ -14,6 +14,7 @@ class MassObject
 
   def self.attributes
     @attributes
+    @assic_params = {}
   end
 
   def self.parse_all(results)

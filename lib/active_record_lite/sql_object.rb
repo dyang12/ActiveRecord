@@ -52,18 +52,19 @@ class SQLObject < MassObject
       "#{attribute} = ?"
     end.join(',')
 
+    attr_values << self.id
+
     DBConnection.execute(<<-SQL, *attr_values)
     UPDATE #{self.class.table_name}
     SET #{set_line}
-    WHERE id = #{self.id}
+    WHERE id = ?
     SQL
 
-    # question mark for self.id
   end
 
 
   def save
-    if self.id # self.class.find(self.id)
+    if self.id
       update
     else
       create

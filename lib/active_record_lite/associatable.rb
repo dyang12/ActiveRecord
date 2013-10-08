@@ -16,17 +16,9 @@ class BelongsToAssocParams < AssocParams
   attr_reader :other_class_name, :primary_key, :foreign_key
 
   def initialize(name, params)
-      params.include?(:class_name) ?
-        @other_class_name = params[:class_name] :
-        @other_class_name = name.to_s.camelcase
-
-      params.include?(:primary_key) ?
-        @primary_key = params[:primary_key].to_s :
-        @primary_key = "id"
-
-      params.include?(:foreign_key) ?
-        @foreign_key = params[:foreign_key].to_s :
-        @foreign_key = "#{name}_id"
+    @other_class_name = params[:class_name] || name.to_s.camelcase
+    @primary_key = params[:primary_key] || :id
+    @foreign_key = params[:foreign_key] || :"#{name}_id"
   end
 
   def type
@@ -38,17 +30,9 @@ class HasManyAssocParams < AssocParams
   attr_reader :other_class_name, :primary_key, :foreign_key
 
   def initialize(name, params, self_class)
-    params.include?(:class_name) ?
-      @other_class_name = params[:class_name] :
-      @other_class_name = name.to_s.singularize.camelcase
-
-    params.include?(:primary_key) ?
-      @primary_key = params[:primary_key].to_s :
-      @primary_key = "id"
-
-    params.include?(:foreign_key) ?
-      @foreign_key = params[:foreign_key].to_s :
-      @foreign_key = "#{self_class.snake_case}_id"
+    @other_class_name = params[:class_name] || name.to_s.singularize.camelcase
+    @primary_key = params[:primary_key] || @primary_key = :id
+    @foreign_key = params[:foreign_key] || :"#{self_class.snake_case}_id"
   end
 
   def type
@@ -69,8 +53,10 @@ module Associatable
         FROM #{settings.other_table}
         WHERE #{settings.primary_key} = ?
       SQL
-      # handle nil case
-      settings.other_class.new(result[0])
+
+      return nil if result.empty?
+      settings.other_class.assoc_params[name.to_sym] =
+            settings.other_class.new(result[0])
     end
   end
 
@@ -89,5 +75,15 @@ module Associatable
   end
 
   def has_one_through(name, assoc1, assoc2)
+    define_method(name.to_sym, assoc1, assoc2) do
+
+      result = DBConnection.execute(<<-SQL)
+      SELECT *
+      FROM
+      SQL
+
+      return nil if result.empty?
+
+    end
   end
 end

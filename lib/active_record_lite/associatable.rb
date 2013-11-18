@@ -54,9 +54,7 @@ module Associatable
         WHERE #{settings.primary_key} = ?
       SQL
 
-      return nil if result.empty?
-      settings.other_class.assoc_params[name.to_sym] =
-            settings.other_class.new(result[0])
+      settings.other_class.parse_all(result).first
     end
   end
 
@@ -75,15 +73,21 @@ module Associatable
   end
 
   def has_one_through(name, assoc1, assoc2)
-    define_method(name.to_sym, assoc1, assoc2) do
+    define_method(name.to_sym) do
+      set1 = self.class.assoc_params[assoc1]
+      set2 = params1.other_class.assoc_params[assoc2]
+      pk1 = self.send(params1.foreign_key)
 
-      result = DBConnection.execute(<<-SQL)
-      SELECT *
-      FROM
+      result = DBConnection.execute(<<-SQL, pk1)
+      SELECT #{set2.other_table}.*
+      FROM #{set1.other_table}
+      JOIN #{set2.other_table}
+      ON #{set1.other_table}.#{set2.foreign_key}
+        = #{set2.other_table}.#{set1.primary_key} = ?
+      WHERE #{set1.other_table}.#{params1.primary_key} = ?
       SQL
 
-      return nil if result.empty?
-
+      params2.other_class.parse_all(results).first
     end
   end
 end

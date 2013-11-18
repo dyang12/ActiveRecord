@@ -1,20 +1,14 @@
 class MassObject
   def self.my_attr_accessible(*attributes)
-    @attributes = []
-    # write your own attr_accessor
-
-    # @attributes = attributes
-    # attr_accessor *attributes
+    @attributes = attributes
 
     attributes.each do |attribute|
       attr_accessor attribute
-      @attributes << attribute
     end
   end
 
   def self.attributes
     @attributes
-    @assic_params = {}
   end
 
   def self.parse_all(results)
